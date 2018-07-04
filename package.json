@@ -33,11 +33,7 @@
     "uglify-js": "2.7.0"
   },
   "dependencies": {
-    "babel-plugin-transform-object-rest-spread": "^6.26.0",
-    "babel-plugin-transform-runtime": "^6.23.0",
-    "babel-preset-env": "^1.7.0",
     "bluebird": "3.4.6",
-    "double-ended-queue": "^2.1.0-0",
     "optimist": "0.6.1",
     "server-destroy": "^1.0.1",
     "uuid": "3.0.1",
