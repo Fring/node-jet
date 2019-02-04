@@ -879,7 +879,7 @@ MessageSocket.prototype.addEventListener = function (method, listener) {
 exports.MessageSocket = MessageSocket
 
 }).call(this,require('_process'),require("buffer").Buffer)
-},{"./net":8,"_process":25,"buffer":21,"events":22,"util":28}],8:[function(require,module,exports){
+},{"./net":8,"_process":26,"buffer":21,"events":22,"util":28}],8:[function(require,module,exports){
 /*
  * dirty hack to trick webpack (without config => next.js) to ignore
  * the require('net') statements
@@ -1126,14 +1126,22 @@ var Peer = function (config) {
       if (that.config.user) {
         that.authenticate(that.config.user, that.config.password).then(function (access) {
           that.access = access
-          that.connected = true
-          that.resolveConnect(that)
+          return that.getPeerId().then(function (peerId) {
+            that.id = peerId
+          }).catch(function () {}).then(function () {
+            that.connected = true
+            that.resolveConnect(that)
+          })
         }).catch(function (err) {
           that.rejectConnect(err)
         })
       } else {
-        that.connected = true
-        that.resolveConnect(that)
+        return that.getPeerId().then(function (peerId) {
+          that.id = peerId
+        }).catch(function () {}).then(function () {
+          that.connected = true
+          that.resolveConnect(that)
+        })
       }
     })
   }).catch(function (err) {
@@ -1276,6 +1284,8 @@ Peer.prototype.add = function (stateOrMethod) {
  * @returns {external:Promise} Gets resolved as soon as the content has been removed from the Daemon.
  */
 Peer.prototype.remove = function (stateOrMethod) {
+  stateOrMethod.jsonrpc = this.jsonrpc
+  stateOrMethod.connectPromise = this.connectPromise
   return stateOrMethod.remove()
 }
 
@@ -1307,6 +1317,14 @@ Peer.prototype.call = function (path, callparams, options) {
  */
 Peer.prototype.info = function () {
   return this.jsonrpc.service('info', {})
+}
+
+/**
+ * PeerId
+ * @private
+ */
+Peer.prototype.getPeerId = function () {
+  return this.jsonrpc.service('getPeerId', {})
 }
 
 /**
@@ -4933,7 +4951,7 @@ function isnan (val) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"base64-js":19,"ieee754":23,"isarray":24}],22:[function(require,module,exports){
+},{"base64-js":19,"ieee754":23,"isarray":25}],22:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -5324,13 +5342,38 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 }
 
 },{}],24:[function(require,module,exports){
+if (typeof Object.create === 'function') {
+  // implementation from standard node.js 'util' module
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    ctor.prototype = Object.create(superCtor.prototype, {
+      constructor: {
+        value: ctor,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+  };
+} else {
+  // old school shim for old browsers
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    var TempCtor = function () {}
+    TempCtor.prototype = superCtor.prototype
+    ctor.prototype = new TempCtor()
+    ctor.prototype.constructor = ctor
+  }
+}
+
+},{}],25:[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -5515,31 +5558,6 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 process.umask = function() { return 0; };
-
-},{}],26:[function(require,module,exports){
-if (typeof Object.create === 'function') {
-  // implementation from standard node.js 'util' module
-  module.exports = function inherits(ctor, superCtor) {
-    ctor.super_ = superCtor
-    ctor.prototype = Object.create(superCtor.prototype, {
-      constructor: {
-        value: ctor,
-        enumerable: false,
-        writable: true,
-        configurable: true
-      }
-    });
-  };
-} else {
-  // old school shim for old browsers
-  module.exports = function inherits(ctor, superCtor) {
-    ctor.super_ = superCtor
-    var TempCtor = function () {}
-    TempCtor.prototype = superCtor.prototype
-    ctor.prototype = new TempCtor()
-    ctor.prototype.constructor = ctor
-  }
-}
 
 },{}],27:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
@@ -6138,5 +6156,5 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":27,"_process":25,"inherits":26}]},{},[1])(1)
+},{"./support/isBuffer":27,"_process":26,"inherits":24}]},{},[1])(1)
 });
